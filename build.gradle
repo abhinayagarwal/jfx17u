@@ -403,12 +403,15 @@ ext.IS_COMPILE_PARFAIT = Boolean.parseBoolean(COMPILE_PARFAIT)
 defineProperty("STATIC_BUILD", "false")
 ext.IS_STATIC_BUILD = Boolean.parseBoolean(STATIC_BUILD)
 
-if (IS_STATIC_BUILD && IS_COMPILE_MEDIA) {
-    throw new GradleException("Can not have COMPILE_MEDIA when STATIC_BUILD is enabled");
-}
+defineProperty("INCLUDE_MONOCLE", "false")
+ext.IS_INCLUDE_MONOCLE = Boolean.parseBoolean(INCLUDE_MONOCLE)
 
 // By default, target architecture = host architecture, but we allow different ones.
 defineProperty("TARGET_ARCH", OS_ARCH)
+ext.TARGET_ARCH_EXT = IS_64 ? IS_AARCH64 ? "aarch64" : "x64" : "x32";
+if (TARGET_ARCH == "arm32") {
+    ext.TARGET_ARCH_EXT = "arm32";
+}
 
 // BUILD_TOOLS_DOWNLOAD_SCRIPT specifies a path of a gradle script which downloads
 // required build tools.
@@ -1192,7 +1195,8 @@ compileTargets { t ->
     if (!targetProperties.containsKey('includeSWT')) targetProperties.includeSWT = true
     if (!targetProperties.containsKey('includeSwing')) targetProperties.includeSwing = true
     if (!targetProperties.containsKey('includeNull3d')) targetProperties.includeNull3d = true
-    if (!targetProperties.containsKey('includeMonocle')) targetProperties.includeMonocle = false
+    if (!targetProperties.containsKey('includeMonocle')) targetProperties.includeMonocle = IS_INCLUDE_MONOCLE
+
     if (!targetProperties.containsKey('includeEGL')) targetProperties.includeEGL = false
 
     if (!targetProperties.containsKey('includeGTK')) targetProperties.includeGTK = IS_LINUX
@@ -2546,7 +2550,11 @@ project(":controls") {
         }
     }
 
-    project.ext.moduleSourcePath = defaultModuleSourcePath
+    if (!project.hasProperty('moduleSourcePath')) {
+        project.ext.moduleSourcePath = defaultModuleSourcePath
+    } else {
+        project.ext.moduleSourcePath = project.ext.moduleSourcePath + ":" + defaultModuleSourcePath
+    }
     project.ext.moduleSourcePathShim = defaultModuleSourcePathShim
 
     commonModuleSetup(project, [ 'base', 'graphics', 'controls' ])
@@ -2867,19 +2875,14 @@ project(":media") {
                     commandLine ("make", "${makeJobsFlag}", "-C", "${nativeSrcDir}/jfxmedia/projects/${projectDir}")
                     args("JAVA_HOME=${JDK_HOME}", "GENERATED_HEADERS_DIR=${generatedHeadersDir}",
                          "OUTPUT_DIR=${nativeOutputDir}", "BUILD_TYPE=${buildType}", "BASE_NAME=jfxmedia",
-                         "COMPILE_PARFAIT=${compileParfait}",
-                         IS_64 ? IS_AARCH64 ? "ARCH=aarch64" : "ARCH=x64" : "ARCH=x32",
-                        "CC=${mediaProperties.compiler}", "LINKER=${mediaProperties.linker}")
+                         "COMPILE_PARFAIT=${compileParfait}", "ARCH=${TARGET_ARCH_EXT}",
+                         "CC=${mediaProperties.compiler}", "LINKER=${mediaProperties.linker}", "STATIC=${IS_STATIC_BUILD}")
 
                     if (t.name == "win") {
                         environment(WINDOWS_NATIVE_COMPILE_ENVIRONMENT)
                         args( "RESOURCE=${nativeOutputDir}/${buildType}/${WIN.media.jfxmediaRcFile}")
                     } else {
-                        if (t.name.startsWith("arm")) {
-                            args("EXTRA_CFLAGS=${mediaProperties.extra_cflags}", "EXTRA_LDFLAGS=${mediaProperties.extra_ldflags}")
-                        } else {
-                            args("HOST_COMPILE=1")
-                        }
+                        args("HOST_COMPILE=1")
                     }
                 }
             }
@@ -2895,8 +2898,8 @@ project(":media") {
                     exec {
                         commandLine ("make", "${makeJobsFlag}", "-C", "${nativeSrcDir}/gstreamer/projects/${projectDir}/gstreamer-lite")
                         args("OUTPUT_DIR=${nativeOutputDir}", "BUILD_TYPE=${buildType}", "BASE_NAME=gstreamer-lite",
-                             IS_64 ? IS_AARCH64 ? "ARCH=aarch64" : "ARCH=x64" : "ARCH=x32", "CC=${mediaProperties.compiler}",
-                             "AR=${mediaProperties.ar}", "LINKER=${mediaProperties.linker}")
+                             "ARCH=${TARGET_ARCH_EXT}", "CC=${mediaProperties.compiler}",
+                             "AR=${mediaProperties.ar}", "LINKER=${mediaProperties.linker}", "STATIC=${IS_STATIC_BUILD}")
 
                         if (t.name == "win") {
                             environment(WINDOWS_NATIVE_COMPILE_ENVIRONMENT)
@@ -2912,9 +2915,9 @@ project(":media") {
                 doLast {
                     exec {
                         commandLine ("make", "${makeJobsFlag}", "-C", "${nativeSrcDir}/gstreamer/projects/${projectDir}/fxplugins")
-                        args("OUTPUT_DIR=${nativeOutputDir}", "BUILD_TYPE=${buildType}", "BASE_NAME=fxplugins",
-                             IS_64 ? IS_AARCH64 ? "ARCH=aarch64" : "ARCH=x64" : "ARCH=x32",
-                             "CC=${mediaProperties.compiler}", "AR=${mediaProperties.ar}", "LINKER=${mediaProperties.linker}")
+                        args("OUTPUT_DIR=${nativeOutputDir}", "BUILD_TYPE=${buildType}", "BASE_NAME=fxplugins", "ARCH=${TARGET_ARCH_EXT}",
+                             "CC=${mediaProperties.compiler}", "AR=${mediaProperties.ar}", "LINKER=${mediaProperties.linker}",
+                             "STATIC=${IS_STATIC_BUILD}")
 
                         if (t.name == "win") {
                             environment(WINDOWS_NATIVE_COMPILE_ENVIRONMENT)
@@ -2926,7 +2929,7 @@ project(":media") {
 
             buildNative.dependsOn buildPlugins
 
-            if (t.name == "linux") {
+            if (t.name == "linux" || t.name == "arm32") {
                 // Pre-defined command line arguments
                 def cfgCMDArgs = ["sh", "configure"]
                 def commonCfgArgs = ["--enable-shared", "--disable-debug", "--disable-static", "--disable-yasm", "--disable-doc", "--disable-programs", "--disable-everything"]
@@ -3223,7 +3226,7 @@ project(":media") {
                                         args("CC=${mediaProperties.compiler}", "LINKER=${mediaProperties.linker}",
                                              "OUTPUT_DIR=${nativeOutputDir}", "BUILD_TYPE=${buildType}",
                                              "BASE_NAME=avplugin", "VERSION=${version}", "LIBAV_DIR=${libavDir}",
-                                             "SUFFIX=", IS_64 ? IS_AARCH64 ? "ARCH=aarch64" : "ARCH=x64" : "ARCH=x32",
+                                             "SUFFIX=", "ARCH=${TARGET_ARCH_EXT}",
                                              "STATIC=${IS_STATIC_BUILD}")
                                     }
                                 }
@@ -3238,8 +3241,7 @@ project(":media") {
                                         args("CC=${mediaProperties.compiler}", "LINKER=${mediaProperties.linker}",
                                              "OUTPUT_DIR=${nativeOutputDir}", "BUILD_TYPE=${buildType}",
                                              "BASE_NAME=avplugin", "VERSION=${version}", "LIBAV_DIR=${libavDir}",
-                                             "SUFFIX=-ffmpeg",
-                                             IS_64 ? IS_AARCH64 ? "ARCH=aarch64" : "ARCH=x64" : "ARCH=x32")
+                                             "SUFFIX=-ffmpeg", "ARCH=${TARGET_ARCH_EXT}")
                                     }
                                 }
                             }
@@ -3253,8 +3255,7 @@ project(":media") {
                                         args("CC=${mediaProperties.compiler}", "LINKER=${mediaProperties.linker}",
                                              "OUTPUT_DIR=${nativeOutputDir}", "BUILD_TYPE=${buildType}",
                                              "BASE_NAME=avplugin", "VERSION=${version}", "LIBAV_DIR=${libavDir}",
-                                             "SUFFIX=-ffmpeg",
-                                             IS_64 ? IS_AARCH64 ? "ARCH=aarch64" : "ARCH=x64" : "ARCH=x32")
+                                             "SUFFIX=-ffmpeg", "ARCH=${TARGET_ARCH_EXT}")
                                     }
                                 }
                             }
@@ -3264,7 +3265,7 @@ project(":media") {
                                 commandLine ("make", "${makeJobsFlag}", "-C", "${nativeSrcDir}/gstreamer/projects/linux/avplugin")
                                 args("CC=${mediaProperties.compiler}", "LINKER=${mediaProperties.linker}",
                                      "OUTPUT_DIR=${nativeOutputDir}", "BUILD_TYPE=${buildType}",
-                                     "BASE_NAME=avplugin", IS_64 ? IS_AARCH64 ? "ARCH=aarch64" : "ARCH=x64" : "ARCH=x32")
+                                     "BASE_NAME=avplugin", "ARCH=${TARGET_ARCH_EXT}", "STATIC=${IS_STATIC_BUILD}")
                             }
                         }
                     }
@@ -3386,7 +3387,12 @@ project(":web") {
         }
     }
 
-    project.ext.moduleSourcePath = defaultModuleSourcePath
+    if (!project.hasProperty('moduleSourcePath')) {
+        project.ext.moduleSourcePath = defaultModuleSourcePath
+    }
+    if (project.hasProperty('bundledWebkit')) {
+        addNative(project, "webview")
+    }
     project.ext.moduleSourcePathShim = defaultModuleSourcePathShim
 
     commonModuleSetup(project, [ 'base', 'graphics', 'controls', 'media', 'web' ])
@@ -3416,7 +3422,7 @@ project(":web") {
     // add in the wrappers to the compile
     sourceSets.main.java.srcDirs += "${gensrcDir}"
 
-    if (IS_COMPILE_WEBKIT) {
+    if (IS_COMPILE_WEBKIT || project.hasProperty('bundledWebkit')) {
         compileJava {
             // generate the native headers during compile
             // only needed if we are doing the native compile
@@ -3432,7 +3438,9 @@ project(":web") {
         into "${gensrcDir}"
     }
 
-    compileJava.dependsOn(copyWrappers);
+    if (!project.hasProperty('bundledWebkit')) {
+        compileJava.dependsOn(copyWrappers);
+    }
 
     test {
         doFirst {
@@ -3507,6 +3515,10 @@ project(":web") {
                         environment(WINDOWS_NATIVE_COMPILE_ENVIRONMENT)
                     } else if (t.name == "mac") {
                         cmakeArgs = " $cmakeArgs -DCMAKE_OSX_DEPLOYMENT_TARGET=$MACOSX_MIN_VERSION -DCMAKE_OSX_SYSROOT=$MACOSX_SDK_PATH"
+                        if (IS_STATIC_BUILD) {
+                            def cFlags = " -DSTATIC_BUILD=1";
+                            cmakeArgs = "$cmakeArgs -DCMAKE_C_FLAGS='${cFlags}' -DCMAKE_CXX_FLAGS='${cFlags}'"
+                        }
                     } else if (t.name == "linux") {
                         cmakeArgs = " $cmakeArgs -DCMAKE_SYSTEM_NAME=Linux"
                         if (IS_64) {
@@ -5035,6 +5047,10 @@ compileTargets { t ->
                     from ("$winsdklib");
                 }
             }
+            if (t.name == "android") {
+                def lib = 'fontNativeFreetype'
+                from ("${graphicsProject.buildDir}/libs/$lib/${t.name}/${library(targetProperties[lib].lib)}")
+            }
         }
 
         def buildModuleMediaTask = task("buildModuleMedia$t.capital", type: Copy, dependsOn: [mediaProject.assemble, prepOpenJfxStubs]) {
@@ -5052,8 +5068,8 @@ compileTargets { t ->
                     // OSX media natives
                     [ "jfxmedia_qtkit", "jfxmedia_avf", "glib-lite" ].each { name ->
                         from ("${mediaProject.buildDir}/native/${t.name}/${mediaBuildType}/${library(name)}") }
-                } else if (t.name == "linux") {
-                    from("${mediaProject.buildDir}/native/${t.name}/${mediaBuildType}") { include "libavplugin*.so" }
+                } else if (t.name == "linux" || t.name == "arm32") {
+                    from("${mediaProject.buildDir}/native/${t.name}/${mediaBuildType}") { include "libavplugin*.${IS_STATIC_BUILD ? 'a' : 'so'}" }
                 } else from ("${mediaProject.buildDir}/native/${t.name}/${mediaBuildType}/${library("glib-lite")}")
             } else {
                 if (t.name != "android"  && t.name != "dalvik" ) {
@@ -5066,7 +5082,7 @@ compileTargets { t ->
                     [ "jfxmedia_qtkit", "jfxmedia_avf", "glib-lite" ].each { name ->
                         from ("$MEDIA_STUB/${library(name)}") }
                 } else if (t.name == "linux") {
-                    from(MEDIA_STUB) { include "libavplugin*.so" }
+                    from(MEDIA_STUB) { include "libavplugin*.${IS_STATIC_BUILD ? 'a' : 'so'}" }
                 }
                 else if (t.name != "android"  && t.name != "dalvik" ) {
                     from ("$MEDIA_STUB/${library("glib-lite")}")
@@ -5086,6 +5102,11 @@ compileTargets { t ->
                 if (t.name != "android" && t.name != "ios" && t.name != "dalvik") {
                     from ("$WEB_STUB/${library('jfxwebkit')}")
                 }
+            }
+
+            if (t.name == "ios" || t.name == "android") {
+                def lib = 'webview'
+                from ("${webProject.buildDir}/libs/$lib/${t.name}/${library(targetProperties[lib].lib)}")
             }
         }
 
