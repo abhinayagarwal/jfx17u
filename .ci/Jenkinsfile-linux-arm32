@@ -108,8 +108,8 @@ pipeline {
          */
         stage('Load env vars (fork)') {
             when {
-                not {
-                    environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                expression {
+                    return params.REPO != 'gluonhq/gluonjfx' && params.REPO != 'gluonhq/gluonjfx17u'
                 }
             }
             steps {
@@ -128,7 +128,9 @@ pipeline {
          */
         stage('Load env vars (official)') {
             when {
-                environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                expression {
+                    return params.REPO == 'gluonhq/gluonjfx' || params.REPO == 'gluonhq/gluonjfx17u'
+                }
             }
             steps {
                 script {
@@ -203,7 +205,7 @@ pipeline {
         stage('Rename dynamic artifact zips (fork)') {
             when {
                 expression {
-                    return params.BUILD_DYNAMIC && params.REPO != 'gluonhq/gluonjfx'
+                    return params.BUILD_DYNAMIC && params.REPO != 'gluonhq/gluonjfx' && params.REPO != 'gluonhq/gluonjfx17u'
                 }
             }
             steps {
@@ -214,7 +216,7 @@ pipeline {
         stage('Rename dynamic artifact zips (official / ea)') {
             when {
                 expression {
-                    return params.BUILD_DYNAMIC && params.REPO == 'gluonhq/gluonjfx' && !params.MILESTONE_FCS
+                    return params.BUILD_DYNAMIC && (params.REPO == 'gluonhq/gluonjfx' || params.REPO == 'gluonhq/gluonjfx17u') && !params.MILESTONE_FCS
                 }
             }
             steps {
@@ -225,7 +227,7 @@ pipeline {
         stage('Rename dynamic artifact zips (official / fcs)') {
             when {
                 expression {
-                    return params.BUILD_DYNAMIC && params.REPO == 'gluonhq/gluonjfx' && params.MILESTONE_FCS
+                    return params.BUILD_DYNAMIC && (params.REPO == 'gluonhq/gluonjfx' || params.REPO == 'gluonhq/gluonjfx17u') && params.MILESTONE_FCS
                 }
             }
             steps {
