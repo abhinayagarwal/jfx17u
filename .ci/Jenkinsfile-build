@@ -44,7 +44,7 @@ def generateTargetUploadStage(target, buildNumber) {
     return {
         def openjfxFolder = params.GLUON_PRIVATE_RELEASE ? 'restricted/openjfx' : 'openjfx'
         stage("Upload dynamic zips ${target} (fork)") {
-            if (params.BUILD_DYNAMIC && params.REPO != 'gluonhq/gluonjfx') {
+            if (params.BUILD_DYNAMIC && params.REPO != 'gluonhq/gluonjfx' && params.REPO != 'gluonhq/gluonjfx17u') {
                 if (Globals.dynamicSDKTargets.containsKey(target)) {
                     copyArtifacts projectName: "OpenJFX-build-${target}", selector: specific("${buildNumber}"), flatten: true, filter: 'artifacts/dynamic/openjfx-*-sdk.zip', target: "artifacts/${target}/dynamic", fingerprintArtifacts: true
                     sh "ssh root@download2.gluonhq.com 'mkdir -p /var/www/html/${openjfxFolder}/forks/${env.REPO_ACCOUNT}/${env.MAJOR_VERSION}'"
@@ -60,7 +60,7 @@ def generateTargetUploadStage(target, buildNumber) {
             }
         }
         stage("Upload dynamic monocle zips ${target} (fork)") {
-            if (params.BUILD_DYNAMIC && params.BUILD_MONOCLE && params.REPO != 'gluonhq/gluonjfx') {
+            if (params.BUILD_DYNAMIC && params.BUILD_MONOCLE && params.REPO != 'gluonhq/gluonjfx' && params.REPO != 'gluonhq/gluonjfx17u') {
                 if (Globals.dynamicMonocleSDKTargets.containsKey(target)) {
                     copyArtifacts projectName: "OpenJFX-build-${target}", selector: specific("${buildNumber}"), flatten: true, filter: 'artifacts/dynamic-monocle/openjfx-*-sdk.zip', target: "artifacts/${target}/dynamic-monocle", fingerprintArtifacts: true
                     sh "ssh root@download2.gluonhq.com 'mkdir -p /var/www/html/${openjfxFolder}/forks/${env.REPO_ACCOUNT}/${env.MAJOR_VERSION}'"
@@ -70,7 +70,7 @@ def generateTargetUploadStage(target, buildNumber) {
             }
         }
         stage("Upload static zips ${target} (fork)") {
-            if (params.BUILD_STATIC && params.REPO != 'gluonhq/gluonjfx') {
+            if (params.BUILD_STATIC && params.REPO != 'gluonhq/gluonjfx' && params.REPO != 'gluonhq/gluonjfx17u') {
                 if (Globals.staticSDKTargets.containsKey(target)) {
                     copyArtifacts projectName: "OpenJFX-build-${target}", selector: specific("${buildNumber}"), flatten: true, filter: '**/javafx-static-sdk-regular-*.zip', target: "artifacts/${target}", fingerprintArtifacts: true
                     sh "ssh root@download2.gluonhq.com 'mkdir -p /var/www/html/substrate/javafxstaticsdk/forks/${env.REPO_ACCOUNT}'"
@@ -80,7 +80,7 @@ def generateTargetUploadStage(target, buildNumber) {
             }
         }
         stage("Upload static monocle zips ${target} (fork)") {
-            if (params.BUILD_STATIC && params.BUILD_MONOCLE && params.REPO != 'gluonhq/gluonjfx') {
+            if (params.BUILD_STATIC && params.BUILD_MONOCLE && params.REPO != 'gluonhq/gluonjfx' && params.REPO != 'gluonhq/gluonjfx17u') {
                 if (Globals.staticMonocleSDKTargets.containsKey(target)) {
                     copyArtifacts projectName: "OpenJFX-build-${target}", selector: specific("${buildNumber}"), flatten: true, filter: '**/javafx-static-sdk-monocle-*.zip', target: "artifacts/${target}", fingerprintArtifacts: true
                     sh "ssh root@download2.gluonhq.com 'mkdir -p /var/www/html/substrate/javafxstaticsdk/forks/${env.REPO_ACCOUNT}'"
@@ -90,7 +90,7 @@ def generateTargetUploadStage(target, buildNumber) {
             }
         }
         stage("Upload dynamic zips ${target} (official / ea)") {
-            if (params.BUILD_DYNAMIC && params.REPO == 'gluonhq/gluonjfx' && !params.MILESTONE_FCS) {
+            if (params.BUILD_DYNAMIC && (params.REPO == 'gluonhq/gluonjfx' || params.REPO == 'gluonhq/gluonjfx17u') && !params.MILESTONE_FCS) {
                 if (Globals.dynamicSDKTargets.containsKey(target)) {
                     copyArtifacts projectName: "OpenJFX-build-${target}", selector: specific("${buildNumber}"), flatten: true, filter: 'artifacts/dynamic/openjfx-*-sdk.zip', target: "artifacts/${target}/dynamic", fingerprintArtifacts: true
                     sh "ssh root@download2.gluonhq.com 'mkdir -p /var/www/html/${openjfxFolder}/${env.MAJOR_VERSION}'"
@@ -106,7 +106,7 @@ def generateTargetUploadStage(target, buildNumber) {
             }
         }
         stage("Upload dynamic monocle zips ${target} (official / ea)") {
-            if (params.BUILD_DYNAMIC && params.BUILD_MONOCLE && params.REPO == 'gluonhq/gluonjfx' && !params.MILESTONE_FCS) {
+            if (params.BUILD_DYNAMIC && params.BUILD_MONOCLE && (params.REPO == 'gluonhq/gluonjfx' || params.REPO == 'gluonhq/gluonjfx17u') && !params.MILESTONE_FCS) {
                 if (Globals.dynamicMonocleSDKTargets.containsKey(target)) {
                     copyArtifacts projectName: "OpenJFX-build-${target}", selector: specific("${buildNumber}"), flatten: true, filter: 'artifacts/dynamic-monocle/openjfx-*-sdk.zip', target: "artifacts/${target}/dynamic-monocle", fingerprintArtifacts: true
                     sh "ssh root@download2.gluonhq.com 'mkdir -p /var/www/html/${openjfxFolder}/${env.MAJOR_VERSION}'"
@@ -116,7 +116,7 @@ def generateTargetUploadStage(target, buildNumber) {
             }
         }
         stage("Upload static zips ${target} (official / ea)") {
-            if (params.BUILD_STATIC && params.REPO == 'gluonhq/gluonjfx' && !params.MILESTONE_FCS) {
+            if (params.BUILD_STATIC && (params.REPO == 'gluonhq/gluonjfx' || params.REPO == 'gluonhq/gluonjfx17u') && !params.MILESTONE_FCS) {
                 if (Globals.staticSDKTargets.containsKey(target)) {
                     copyArtifacts projectName: "OpenJFX-build-${target}", selector: specific("${buildNumber}"), flatten: true, filter: '**/javafx-static-sdk-regular-*.zip', target: "artifacts/${target}", fingerprintArtifacts: true
                     sh "scp artifacts/${target}/javafx-static-sdk-regular-${env.MAJOR_VERSION}.zip root@download2.gluonhq.com:/var/www/html/substrate/javafxstaticsdk/openjfx-${env.MAJOR_VERSION}-ea+${env.PROMOTED_BUILD_NUMBER}-${Globals.staticSDKTargets[target]}-static.zip"
@@ -126,7 +126,7 @@ def generateTargetUploadStage(target, buildNumber) {
             }
         }
         stage("Upload static monocle zips ${target} (official / ea)") {
-            if (params.BUILD_STATIC && params.BUILD_MONOCLE && params.REPO == 'gluonhq/gluonjfx' && !params.MILESTONE_FCS) {
+            if (params.BUILD_STATIC && params.BUILD_MONOCLE && (params.REPO == 'gluonhq/gluonjfx' || params.REPO == 'gluonhq/gluonjfx17u') && !params.MILESTONE_FCS) {
                 if (Globals.staticMonocleSDKTargets.containsKey(target)) {
                     copyArtifacts projectName: "OpenJFX-build-${target}", selector: specific("${buildNumber}"), flatten: true, filter: '**/javafx-static-sdk-monocle-*.zip', target: "artifacts/${target}", fingerprintArtifacts: true
                     sh "scp artifacts/${target}/javafx-static-sdk-monocle-${env.MAJOR_VERSION}.zip root@download2.gluonhq.com:/var/www/html/substrate/javafxstaticsdk/openjfx-${env.MAJOR_VERSION}-ea+${env.PROMOTED_BUILD_NUMBER}-${Globals.staticMonocleSDKTargets[target]}-static-monocle.zip"
@@ -136,7 +136,7 @@ def generateTargetUploadStage(target, buildNumber) {
             }
         }
         stage("Upload dynamic zips ${target} (official / fcs)") {
-            if (params.BUILD_DYNAMIC && params.REPO == 'gluonhq/gluonjfx' && params.MILESTONE_FCS) {
+            if (params.BUILD_DYNAMIC && (params.REPO == 'gluonhq/gluonjfx' || params.REPO == 'gluonhq/gluonjfx17u') && params.MILESTONE_FCS) {
                 if (Globals.dynamicSDKTargets.containsKey(target)) {
                     copyArtifacts projectName: "OpenJFX-build-${target}", selector: specific("${buildNumber}"), flatten: true, filter: 'artifacts/dynamic/openjfx-*-sdk.zip', target: "artifacts/${target}/dynamic", fingerprintArtifacts: true
                     sh "ssh root@download2.gluonhq.com 'mkdir -p /var/www/html/${openjfxFolder}/${env.MAJOR_VERSION}'"
@@ -152,7 +152,7 @@ def generateTargetUploadStage(target, buildNumber) {
             }
         }
         stage("Upload dynamic monocle zips ${target} (official / fcs)") {
-            if (params.BUILD_DYNAMIC && params.BUILD_MONOCLE && params.REPO == 'gluonhq/gluonjfx' && params.MILESTONE_FCS) {
+            if (params.BUILD_DYNAMIC && params.BUILD_MONOCLE && (params.REPO == 'gluonhq/gluonjfx' || params.REPO == 'gluonhq/gluonjfx17u') && params.MILESTONE_FCS) {
                 if (Globals.dynamicMonocleSDKTargets.containsKey(target)) {
                     copyArtifacts projectName: "OpenJFX-build-${target}", selector: specific("${buildNumber}"), flatten: true, filter: 'artifacts/dynamic-monocle/openjfx-*-sdk.zip', target: "artifacts/${target}/dynamic-monocle", fingerprintArtifacts: true
                     sh "ssh root@download2.gluonhq.com 'mkdir -p /var/www/html/${openjfxFolder}/${env.MAJOR_VERSION}'"
@@ -162,7 +162,7 @@ def generateTargetUploadStage(target, buildNumber) {
             }
         }
         stage("Upload static zips ${target} (official / fcs)") {
-            if (params.BUILD_STATIC && params.REPO == 'gluonhq/gluonjfx' && params.MILESTONE_FCS) {
+            if (params.BUILD_STATIC && (params.REPO == 'gluonhq/gluonjfx' || params.REPO == 'gluonhq/gluonjfx17u') && params.MILESTONE_FCS) {
                 if (Globals.staticSDKTargets.containsKey(target)) {
                     copyArtifacts projectName: "OpenJFX-build-${target}", selector: specific("${buildNumber}"), flatten: true, filter: '**/javafx-static-sdk-regular-*.zip', target: "artifacts/${target}", fingerprintArtifacts: true
                     sh "scp artifacts/${target}/javafx-static-sdk-regular-${env.MAJOR_VERSION}.zip root@download2.gluonhq.com:/var/www/html/substrate/javafxstaticsdk/openjfx-${env.MAJOR_VERSION}-${Globals.staticSDKTargets[target]}-static.zip"
@@ -172,7 +172,7 @@ def generateTargetUploadStage(target, buildNumber) {
             }
         }
         stage("Upload static monocle zips ${target} (official / fcs)") {
-            if (params.BUILD_STATIC && params.BUILD_MONOCLE && params.REPO == 'gluonhq/gluonjfx' && params.MILESTONE_FCS) {
+            if (params.BUILD_STATIC && params.BUILD_MONOCLE && (params.REPO == 'gluonhq/gluonjfx' || params.REPO == 'gluonhq/gluonjfx17u') && params.MILESTONE_FCS) {
                 if (Globals.staticMonocleSDKTargets.containsKey(target)) {
                     copyArtifacts projectName: "OpenJFX-build-${target}", selector: specific("${buildNumber}"), flatten: true, filter: '**/javafx-static-sdk-monocle-*.zip', target: "artifacts/${target}", fingerprintArtifacts: true
                     sh "scp artifacts/${target}/javafx-static-sdk-monocle-${env.MAJOR_VERSION}.zip root@download2.gluonhq.com:/var/www/html/substrate/javafxstaticsdk/openjfx-${env.MAJOR_VERSION}-${Globals.staticMonocleSDKTargets[target]}-static-monocle.zip"
@@ -268,8 +268,8 @@ pipeline {
          */
         stage('Load env vars (fork)') {
             when {
-                not {
-                    environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                expression {
+                    return params.REPO != 'gluonhq/gluonjfx' && params.REPO != 'gluonhq/gluonjfx17u'
                 }
             }
             steps {
@@ -288,7 +288,9 @@ pipeline {
          */
         stage('Load env vars (official)') {
             when {
-                environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                expression {
+                    return params.REPO == 'gluonhq/gluonjfx' || params.REPO == 'gluonhq/gluonjfx17u'
+                }
             }
             steps {
                 script {
@@ -336,7 +338,10 @@ pipeline {
             when {
                 allOf {
                     environment name: 'PUBLISH_MAVEN_ARTIFACTS', value: 'true'
-                    environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                    anyOf {
+                        environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                        environment name: 'REPO', value: 'gluonhq/gluonjfx17u'
+                    }
                     environment name: 'GLUON_PRIVATE_RELEASE', value: 'false'
                 }
             }
@@ -355,7 +360,10 @@ pipeline {
             when {
                 allOf {
                     environment name: 'PUBLISH_MAVEN_ARTIFACTS', value: 'true'
-                    environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                    anyOf {
+                        environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                        environment name: 'REPO', value: 'gluonhq/gluonjfx17u'
+                    }
                     environment name: 'GLUON_PRIVATE_RELEASE', value: 'true'
                 }
             }
@@ -377,6 +385,9 @@ pipeline {
                     not {
                         environment name: 'REPO', value: 'gluonhq/gluonjfx'
                     }
+                    not {
+                        environment name: 'REPO', value: 'gluonhq/gluonjfx17u'
+                    }
                     environment name: 'GLUON_PRIVATE_RELEASE', value: 'true'
                 }
             }
@@ -397,6 +408,7 @@ pipeline {
                     }
                     anyOf {
                         environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                        environment name: 'REPO', value: 'gluonhq/gluonjfx17u'
                         environment name: 'GLUON_PRIVATE_RELEASE', value: 'true'
                     }
                 }
@@ -413,6 +425,7 @@ pipeline {
                     environment name: 'PUBLISH_MAVEN_ARTIFACTS', value: 'true'
                     anyOf {
                         environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                        environment name: 'REPO', value: 'gluonhq/gluonjfx17u'
                         environment name: 'GLUON_PRIVATE_RELEASE', value: 'true'
                     }
                 }
@@ -465,7 +478,10 @@ pipeline {
             when {
                 allOf {
                     environment name: 'UPLOAD_ZIP_ARTIFACTS', value: 'true'
-                    environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                    anyOf {
+                        environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                        environment name: 'REPO', value: 'gluonhq/gluonjfx17u'
+                    }
                 }
             }
             steps {
@@ -481,7 +497,10 @@ pipeline {
             when {
                 allOf {
                     environment name: 'UPLOAD_ZIP_ARTIFACTS', value: 'true'
-                    environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                    anyOf {
+                        environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                        environment name: 'REPO', value: 'gluonhq/gluonjfx17u'
+                    }
                     environment name: 'MILESTONE_FCS', value: 'false'
                     environment name: 'GLUON_PRIVATE_RELEASE', value: 'false'
                 }
@@ -497,7 +516,10 @@ pipeline {
             when {
                 allOf {
                     environment name: 'UPLOAD_ZIP_ARTIFACTS', value: 'true'
-                    environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                    anyOf {
+                        environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                        environment name: 'REPO', value: 'gluonhq/gluonjfx17u'
+                    }
                     environment name: 'MILESTONE_FCS', value: 'true'
                     environment name: 'GLUON_PRIVATE_RELEASE', value: 'false'
                 }
@@ -513,7 +535,10 @@ pipeline {
             when {
                 allOf {
                     environment name: 'UPLOAD_ZIP_ARTIFACTS', value: 'true'
-                    environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                    anyOf {
+                        environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                        environment name: 'REPO', value: 'gluonhq/gluonjfx17u'
+                    }
                     environment name: 'MILESTONE_FCS', value: 'false'
                     environment name: 'GLUON_PRIVATE_RELEASE', value: 'true'
                 }
@@ -529,7 +554,10 @@ pipeline {
             when {
                 allOf {
                     environment name: 'UPLOAD_ZIP_ARTIFACTS', value: 'true'
-                    environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                    anyOf {
+                        environment name: 'REPO', value: 'gluonhq/gluonjfx'
+                        environment name: 'REPO', value: 'gluonhq/gluonjfx17u'
+                    }
                     environment name: 'MILESTONE_FCS', value: 'true'
                     environment name: 'GLUON_PRIVATE_RELEASE', value: 'true'
                 }
