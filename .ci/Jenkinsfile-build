@@ -583,5 +583,26 @@ pipeline {
                 }
             }
         }
+
+        stage('Release Notes') {
+            tools {
+                jdk 'openjdk-15'
+            }
+            when {
+                allOf {
+                    environment name: 'REPO', value: 'gluonhq/gluonjfx17u'
+                    environment name: 'MILESTONE_FCS', value: 'true'
+                }
+            }
+            steps {
+              checkout scm: [$class: 'GitSCM', userRemoteConfigs: [[url: "git@github.com:gluonhq/create-release-notes.git", credentialsId: 'github-account-tiainen']]], poll: false
+              sh "sed -i \"0,/FIX_VERSION=.*/s//FIX_VERSION=openjfx${env.MAJOR_VERSION}/\" gradle.properties"
+              withCredentials([usernamePassword(credentialsId: "jbs-jira-abagarwal", usernameVariable: 'JIRA_USERNAME', passwordVariable: 'JIRA_PASSWORD')]) {
+                  sh './gradlew run'
+              }
+              sh "scp build/release-notes.md root@download2.gluonhq.com:/var/www/html/restricted/openjfx/${env.MAJOR_VERSION}/release-notes.md"
+              sh "scp build/release-notes.html root@download2.gluonhq.com:/var/www/html/restricted/openjfx/${env.MAJOR_VERSION}/release-notes.html"
+            }
+        }
     }
 }
